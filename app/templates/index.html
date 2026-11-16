@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <title>Messager MAX</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body>
+    <h1>Chat'ик</h1>
+
+    <p>Ваше имя:</p>
+    <input id="username" placeholder="Введите имя">
+
+    <button onclick="connectChat()">Подключиться</button>
+
+    <hr>
+    
+    <div id="chat">
+        <p>Вы пока не подключены.</p>
+    </div>
+
+    <hr>
+
+    <input id="message" placeholder="Введите сообщение">
+    <button onclick="sendMessage()">Отправить</button>
+
+    <script>
+        let socket = null;
+
+        function connectChat() {
+            const username = document
+                .getElementById("username")
+                .value.trim();
+
+            if (!username) {
+                alert("Введите имя!");
+                return;
+            }
+
+            if (socket && socket.readyState === WebSocket.OPEN) {
+                alert("Вы уже подключены!");
+                return;
+            }
+
+            const protocol = location.protocol === "https:" ? "wss:" : "ws:";
+
+            socket = new WebSocket(
+                `${protocol}//${location.host}/ws`
+            );
+
+            socket.onopen = function() {
+                socket.send(JSON.stringify({
+                    type: "join",
+                    username: username
+                }));
+            };
+
+            socket.onmessage = function(event) {
+                const data = JSON.parse(event.data);
+
+                const paragraph = document.createElement("p");
+                paragraph.textContent = data.message;
+
+                document.getElementById("chat")
+                    .appendChild(paragraph);
+            };
+
+            socket.onclose = function() {
+                const paragraph = document.createElement("p");
+                paragraph.textContent = "Соединение закрыто.";
+
+                document.getElementById("chat")
+                    .appendChild(paragraph);
+            };
+
+            socket.onerror = function() {
+                alert("Ошибка подключения к чату.");
+            };
+        }
+
+        function sendMessage() {
+            const input = document.getElementById("message");
+            const text = input.value.trim();
+
+            if (!socket || socket.readyState !== WebSocket.OPEN) {
+                alert("Сначала подключитесь к чату!");
+                return;
+            }
+
+            if (!text) return;
+
+            socket.send(JSON.stringify({
+                type: "message",
+                message: text
+            }));
+
+            input.value = "";
+        }
+    </script>
+</body>
+</html>
