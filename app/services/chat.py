@@ -9,7 +9,7 @@ class ChatManager:
         self.connections.append(websocket)
 
     def disconnect(self, websocket:WebSocket):
-        if websocket in list:
+        if websocket in self.connections:
             self.connections.remove(websocket)
 
     async def broadcast(self, message: dict):
